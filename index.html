@@ -26,7 +26,7 @@
         }
         #scanner-container { 
             position: relative; 
-            margin: 10px 0 5px 0; /* reduced bottom margin */
+            margin: 10px 0 5px 0; 
             text-align: center;
         }
         #scanner-video { 
@@ -128,12 +128,18 @@
                 try {
                     await codeReader.decodeFromVideoDevice(null, 'scanner-video', (result, err) => {
                         if (result) {
-                            document.getElementById('barcode').value = result.getText();
-                            document.getElementById('quantity').value = '';
+                            const barcodeInput = document.getElementById('barcode');
+                            const quantityInput = document.getElementById('quantity');
+
+                            barcodeInput.value = result.getText();
+                            quantityInput.value = '';
                             document.getElementById('status').className = 'success';
                             document.getElementById('status').textContent = 'Barcode detected';
 
-                            // Stop camera automatically after scan
+                            // Focus quantity input automatically
+                            quantityInput.focus();
+
+                            // Stop camera automatically
                             codeReader.reset();
                             cameraActive = false;
                             button.textContent = 'Scan';
@@ -156,8 +162,10 @@
         }
 
         function submitInventory(action) {
-            const barcode = document.getElementById('barcode').value.trim();
-            const quantityVal = document.getElementById('quantity').value;
+            const barcodeInput = document.getElementById('barcode');
+            const quantityInput = document.getElementById('quantity');
+            const barcode = barcodeInput.value.trim();
+            const quantityVal = quantityInput.value;
             const quantity = quantityVal ? parseInt(quantityVal) : 1;
 
             if (!barcode) {
@@ -165,6 +173,11 @@
                 document.getElementById('status').textContent = 'Please scan or enter a barcode';
                 return;
             }
+
+            // Force close mobile keyboard
+            barcodeInput.blur();
+            quantityInput.blur();
+            setTimeout(() => document.activeElement.blur(), 50);
 
             const finalQuantity = action === 'subtract' ? -quantity : quantity;
             const formData = new FormData();
@@ -184,14 +197,11 @@
                     document.getElementById('status').textContent = 'Success! ' + quantity + ' units ' + (action === 'subtract' ? 'subtracted' : 'added') + ' for ' + barcode;
 
                     // Clear fields
-                    document.getElementById('barcode').value = '';
-                    document.getElementById('quantity').value = '';
+                    barcodeInput.value = '';
+                    quantityInput.value = '';
 
-                    // Close mobile keyboard
-                    document.getElementById('barcode').blur();
-                    document.getElementById('quantity').blur();
-
-                    document.getElementById('barcode').focus();
+                    // Focus barcode again for next scan
+                    barcodeInput.focus();
                 } else {
                     throw new Error('Network error');
                 }
@@ -206,7 +216,3 @@
     </script>
 </body>
 </html>
-
-
-
-
