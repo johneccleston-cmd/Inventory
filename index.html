@@ -1,29 +1,29 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>📱 Mobile Barcode Scanner</title>
+    <title>Integrity Door NWA - Inventory Scanner</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         body { 
             font-family: Arial, sans-serif; 
             margin: 0; 
             padding: 20px; 
-            background: #f8f9fa;
+            background: #f4f5f7;
         }
         .container { 
-            max-width: 100%; 
-            background: white; 
+            max-width: 400px; 
+            margin: 0 auto;
+            background: #ffffff; 
             padding: 20px; 
             border-radius: 10px; 
             box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
         }
         h1 { 
-            color: #28a745; 
+            color: #333333; 
             text-align: center; 
             margin-bottom: 20px;
+            font-size: 22px;
         }
-        
-        /* Camera Scanner */
         #scanner-container { 
             position: relative; 
             margin: 20px 0;
@@ -31,24 +31,17 @@
         }
         #scanner-video { 
             width: 100%; 
-            max-width: 400px; 
-            height: 300px; 
-            border: 2px solid #28a745; 
-            border-radius: 10px;
+            height: 250px; 
+            border-radius: 8px;
             background: #000;
         }
-        #scanner-canvas { 
-            display: none; 
-        }
-        
-        /* Buttons */
         .btn { 
             width: 100%; 
-            padding: 15px; 
-            margin: 10px 0; 
-            font-size: 18px; 
+            padding: 12px; 
+            margin: 8px 0; 
+            font-size: 16px; 
             border: none; 
-            border-radius: 8px; 
+            border-radius: 6px; 
             cursor: pointer;
         }
         .btn-camera { 
@@ -63,188 +56,123 @@
             background: #dc3545; 
             color: white; 
         }
-        
-        /* Form Inputs */
         input { 
             width: 100%; 
-            padding: 15px; 
-            margin: 10px 0; 
+            padding: 12px; 
+            margin: 8px 0; 
             font-size: 16px; 
-            border: 2px solid #ddd; 
-            border-radius: 8px; 
+            border: 1px solid #ccc; 
+            border-radius: 6px;
             box-sizing: border-box;
         }
-        input:focus { 
-            border-color: #28a745; 
-            outline: none; 
-        }
-        
-        /* Button Row */
         .button-row {
             display: flex;
             gap: 10px;
         }
         .button-row .btn {
             flex: 1;
-            margin: 5px 0;
         }
-        
-        /* Status Messages */
-        .success { 
-            background: #d4edda; 
-            color: #155724; 
-            padding: 15px; 
-            margin: 15px 0; 
-            border-radius: 8px; 
+        #status {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 14px;
         }
-        .error { 
-            background: #f8d7da; 
-            color: #721c24; 
-            padding: 15px; 
-            margin: 15px 0; 
-            border-radius: 8px; 
-        }
-        .info { 
-            background: #d1ecf1; 
-            color: #0c5460; 
-            padding: 15px; 
-            margin: 15px 0; 
-            border-radius: 8px; 
-        }
-        
-        /* Mobile Responsive */
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
         @media (max-width: 480px) {
             body { padding: 10px; }
             .container { padding: 15px; }
-            h1 { font-size: 24px; }
+            h1 { font-size: 20px; }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>📱 Integrity Door NWA - Inventory Scanner</h1>
-        
-        <div class="info">
-            <strong>📊 Smart Inventory Management:</strong><br>
-            • Scan barcode with camera or type manually<br>
-            • Choose ADD (➕) to increase stock<br>
-            • Choose SUBTRACT (➖) to decrease stock<br>
-            • Your inventory updates automatically!
-        </div>
+        <h1>Inventory Scanner</h1>
 
-        <!-- Camera Scanner -->
         <div id="scanner-container">
             <video id="scanner-video" playsinline></video>
             <canvas id="scanner-canvas"></canvas>
-            <button class="btn btn-camera" onclick="toggleCamera()">📷 Start Camera Scanner</button>
+            <button class="btn btn-camera" onclick="toggleCamera()">Start Camera</button>
         </div>
 
-        <!-- Manual Entry Form -->
         <form id="scanner-form">
-            <input type="text" id="barcode" placeholder="Barcode (camera fills automatically)" required>
+            <input type="text" id="barcode" placeholder="Barcode" required>
             <input type="number" id="quantity" placeholder="Quantity" value="1" min="1" required>
-            
-            <!-- Add/Subtract Buttons -->
             <div class="button-row">
-                <button type="button" class="btn btn-add" onclick="submitInventory('add')">
-                    ➕ ADD Stock
-                </button>
-                <button type="button" class="btn btn-subtract" onclick="submitInventory('subtract')">
-                    ➖ SUBTRACT Stock  
-                </button>
+                <button type="button" class="btn btn-add" onclick="submitInventory('add')">Add Stock</button>
+                <button type="button" class="btn btn-subtract" onclick="submitInventory('subtract')">Subtract Stock</button>
             </div>
         </form>
-        
+
         <div id="status"></div>
     </div>
 
-    <!-- Barcode Scanner Library -->
     <script src="https://unpkg.com/@zxing/library@latest"></script>
-    
     <script>
         let cameraActive = false;
         let codeReader = null;
-        
-        // Initialize barcode scanner
+
         function initializeScanner() {
             codeReader = new ZXing.BrowserMultiFormatReader();
         }
-        
-        // Toggle camera on/off
+
         async function toggleCamera() {
             if (!codeReader) initializeScanner();
-            
-            const video = document.getElementById('scanner-video');
             const button = document.querySelector('.btn-camera');
-            
+
             if (!cameraActive) {
                 try {
-                    // Start camera
                     await codeReader.decodeFromVideoDevice(null, 'scanner-video', (result, err) => {
                         if (result) {
-                            // Barcode detected!
-                            const barcode = result.getText();
-                            document.getElementById('barcode').value = barcode;
-                            document.getElementById('status').innerHTML = 
-                                '<div class="success">📷 Scanned: ' + barcode + ' - Choose ADD or SUBTRACT</div>';
-                            
-                            // Auto-focus quantity field
+                            document.getElementById('barcode').value = result.getText();
+                            document.getElementById('status').className = 'success';
+                            document.getElementById('status').textContent = 'Barcode detected';
                             document.getElementById('quantity').focus();
-                            document.getElementById('quantity').select();
                         }
                     });
-                    
                     cameraActive = true;
-                    button.textContent = '⏹️ Stop Camera';
+                    button.textContent = 'Stop Camera';
                     button.style.background = '#dc3545';
-                    
                 } catch (error) {
-                    document.getElementById('status').innerHTML = 
-                        '<div class="error">❌ Camera Error: ' + error.message + '</div>';
+                    document.getElementById('status').className = 'error';
+                    document.getElementById('status').textContent = 'Camera error: ' + error.message;
                 }
             } else {
-                // Stop camera
                 codeReader.reset();
                 cameraActive = false;
-                button.textContent = '📷 Start Camera Scanner';
+                button.textContent = 'Start Camera';
                 button.style.background = '#007bff';
             }
         }
-        
-        // Submit inventory update
+
         function submitInventory(action) {
             const barcode = document.getElementById('barcode').value.trim();
             const quantity = parseInt(document.getElementById('quantity').value) || 1;
-            
             if (!barcode) {
-                document.getElementById('status').innerHTML = 
-                    '<div class="error">❌ Please enter or scan a barcode first</div>';
+                document.getElementById('status').className = 'error';
+                document.getElementById('status').textContent = 'Please scan or enter a barcode';
                 return;
             }
-            
-            // Calculate final quantity (negative for subtract)
+
             const finalQuantity = action === 'subtract' ? -quantity : quantity;
-            
-            // Send to Zapier webhook
             const formData = new FormData();
             formData.append('id', barcode);
             formData.append('data__name', finalQuantity);
-            
-            const actionText = action === 'subtract' ? 'Subtracting' : 'Adding';
-            document.getElementById('status').innerHTML = 
-                '<div class="info">⏳ ' + actionText + ' ' + quantity + ' units...</div>';
-            
+
+            document.getElementById('status').className = 'info';
+            document.getElementById('status').textContent = (action === 'subtract' ? 'Subtracting ' : 'Adding ') + quantity + ' units...';
+
             fetch('https://hooks.zapier.com/hooks/catch/24499901/uiqb0oy/', {
                 method: 'POST',
                 body: formData
             })
             .then(response => {
                 if (response.ok) {
-                    const actionPast = action === 'subtract' ? 'Subtracted' : 'Added';
-                    document.getElementById('status').innerHTML = 
-                        '<div class="success">✅ SUCCESS! ' + actionPast + ' ' + quantity + ' units for barcode: ' + barcode + '</div>';
-                    
-                    // Reset form
+                    document.getElementById('status').className = 'success';
+                    document.getElementById('status').textContent = 'Success! ' + quantity + ' units ' + (action === 'subtract' ? 'subtracted' : 'added') + ' for ' + barcode;
                     document.getElementById('barcode').value = '';
                     document.getElementById('quantity').value = '1';
                     document.getElementById('barcode').focus();
@@ -253,23 +181,13 @@
                 }
             })
             .catch(error => {
-                document.getElementById('status').innerHTML = 
-                    '<div class="error">❌ Error: Could not update inventory. Please try again.</div>';
+                document.getElementById('status').className = 'error';
+                document.getElementById('status').textContent = 'Could not update inventory. Try again.';
             });
         }
-        
-        // Auto-focus barcode field on load
-        window.addEventListener('load', function() {
-            document.getElementById('barcode').focus();
-        });
-        
-        // Enter key support
-        document.getElementById('quantity').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                // Default to ADD when pressing Enter
-                submitInventory('add');
-            }
-        });
+
+        window.addEventListener('load', () => document.getElementById('barcode').focus());
     </script>
 </body>
 </html>
+
