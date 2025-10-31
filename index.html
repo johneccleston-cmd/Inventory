@@ -26,27 +26,15 @@
         }
         #scanner-container { 
             position: relative; 
-            margin: 10px 0;
+            margin: 10px 0 5px 0; /* reduced bottom margin */
             text-align: center;
         }
         #scanner-video { 
             width: 100%; 
-            height: 200px; /* smaller height */
+            height: 250px; 
             border-radius: 8px;
             background: #000;
             object-fit: cover;
-        }
-        /* Overlay border to simulate scanner window */
-        #scanner-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            border: 3px solid #28a745;
-            border-radius: 8px;
-            pointer-events: none;
-            box-sizing: border-box;
         }
         .btn { 
             width: 100%; 
@@ -86,7 +74,7 @@
             flex: 1;
         }
         #status {
-            margin-top: 12px;
+            margin-top: 10px;
             padding: 10px;
             border-radius: 6px;
             font-size: 14px;
@@ -107,9 +95,8 @@
 
         <div id="scanner-container">
             <video id="scanner-video" playsinline></video>
-            <div id="scanner-overlay"></div>
             <canvas id="scanner-canvas"></canvas>
-            <button class="btn btn-camera" onclick="toggleCamera()">Start Camera</button>
+            <button class="btn btn-camera" onclick="toggleCamera()">Scan</button>
         </div>
 
         <form id="scanner-form">
@@ -146,10 +133,10 @@
                             document.getElementById('status').className = 'success';
                             document.getElementById('status').textContent = 'Barcode detected';
 
-                            // Stop camera automatically
+                            // Stop camera automatically after scan
                             codeReader.reset();
                             cameraActive = false;
-                            button.textContent = 'Start Camera';
+                            button.textContent = 'Scan';
                             button.style.background = '#007bff';
                         }
                     });
@@ -163,7 +150,7 @@
             } else {
                 codeReader.reset();
                 cameraActive = false;
-                button.textContent = 'Start Camera';
+                button.textContent = 'Scan';
                 button.style.background = '#007bff';
             }
         }
@@ -195,8 +182,15 @@
                 if (response.ok) {
                     document.getElementById('status').className = 'success';
                     document.getElementById('status').textContent = 'Success! ' + quantity + ' units ' + (action === 'subtract' ? 'subtracted' : 'added') + ' for ' + barcode;
+
+                    // Clear fields
                     document.getElementById('barcode').value = '';
                     document.getElementById('quantity').value = '';
+
+                    // Close mobile keyboard
+                    document.getElementById('barcode').blur();
+                    document.getElementById('quantity').blur();
+
                     document.getElementById('barcode').focus();
                 } else {
                     throw new Error('Network error');
@@ -212,6 +206,7 @@
     </script>
 </body>
 </html>
+
 
 
 
