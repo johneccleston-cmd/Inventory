@@ -1,4 +1,3 @@
-barcode_scanner.html
 <!DOCTYPE html>
 <html>
 <head>
@@ -56,8 +55,12 @@ barcode_scanner.html
             background: #007bff; 
             color: white; 
         }
-        .btn-update { 
+        .btn-add { 
             background: #28a745; 
+            color: white; 
+        }
+        .btn-subtract { 
+            background: #dc3545; 
             color: white; 
         }
         
@@ -74,6 +77,16 @@ barcode_scanner.html
         input:focus { 
             border-color: #28a745; 
             outline: none; 
+        }
+        
+        /* Button Row */
+        .button-row {
+            display: flex;
+            gap: 10px;
+        }
+        .button-row .btn {
+            flex: 1;
+            margin: 5px 0;
         }
         
         /* Status Messages */
@@ -109,13 +122,14 @@ barcode_scanner.html
 </head>
 <body>
     <div class="container">
-        <h1>📱 Mobile Barcode Scanner</h1>
+        <h1>📱 Integrity Door NWA - Inventory Scanner</h1>
         
         <div class="info">
-            <strong>📊 Camera + Manual Mode:</strong><br>
-            • Use camera to scan barcodes automatically<br>
-            • Or type barcode manually<br>
-            • Enter + numbers to add stock, - numbers to subtract
+            <strong>📊 Smart Inventory Management:</strong><br>
+            • Scan barcode with camera or type manually<br>
+            • Choose ADD (➕) to increase stock<br>
+            • Choose SUBTRACT (➖) to decrease stock<br>
+            • Your inventory updates automatically!
         </div>
 
         <!-- Camera Scanner -->
@@ -127,9 +141,18 @@ barcode_scanner.html
 
         <!-- Manual Entry Form -->
         <form id="scanner-form">
-            <input type="text" id="barcode" placeholder="Barcode (camera will fill this automatically)" required>
-            <input type="number" id="quantity" placeholder="Quantity to add/subtract" value="1" required>
-            <button type="submit" class="btn btn-update">📦 Update Inventory</button>
+            <input type="text" id="barcode" placeholder="Barcode (camera fills automatically)" required>
+            <input type="number" id="quantity" placeholder="Quantity" value="1" min="1" required>
+            
+            <!-- Add/Subtract Buttons -->
+            <div class="button-row">
+                <button type="button" class="btn btn-add" onclick="submitInventory('add')">
+                    ➕ ADD Stock
+                </button>
+                <button type="button" class="btn btn-subtract" onclick="submitInventory('subtract')">
+                    ➖ SUBTRACT Stock  
+                </button>
+            </div>
         </form>
         
         <div id="status"></div>
@@ -163,7 +186,7 @@ barcode_scanner.html
                             const barcode = result.getText();
                             document.getElementById('barcode').value = barcode;
                             document.getElementById('status').innerHTML = 
-                                '<div class="success">📷 Scanned: ' + barcode + '</div>';
+                                '<div class="success">📷 Scanned: ' + barcode + ' - Choose ADD or SUBTRACT</div>';
                             
                             // Auto-focus quantity field
                             document.getElementById('quantity').focus();
@@ -188,12 +211,10 @@ barcode_scanner.html
             }
         }
         
-        // Form submission
-        document.getElementById('scanner-form').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const barcode = document.getElementById('barcode').value;
-            const quantity = document.getElementById('quantity').value;
+        // Submit inventory update
+        function submitInventory(action) {
+            const barcode = document.getElementById('barcode').value.trim();
+            const quantity = parseInt(document.getElementById('quantity').value) || 1;
             
             if (!barcode) {
                 document.getElementById('status').innerHTML = 
@@ -201,13 +222,17 @@ barcode_scanner.html
                 return;
             }
             
+            // Calculate final quantity (negative for subtract)
+            const finalQuantity = action === 'subtract' ? -quantity : quantity;
+            
             // Send to Zapier webhook
             const formData = new FormData();
             formData.append('id', barcode);
-            formData.append('data__name', quantity);
+            formData.append('data__name', finalQuantity);
             
+            const actionText = action === 'subtract' ? 'Subtracting' : 'Adding';
             document.getElementById('status').innerHTML = 
-                '<div class="info">⏳ Updating inventory...</div>';
+                '<div class="info">⏳ ' + actionText + ' ' + quantity + ' units...</div>';
             
             fetch('https://hooks.zapier.com/hooks/catch/24499901/uiqb0oy/', {
                 method: 'POST',
@@ -215,9 +240,9 @@ barcode_scanner.html
             })
             .then(response => {
                 if (response.ok) {
-                    const action = quantity > 0 ? 'Added' : 'Subtracted';
+                    const actionPast = action === 'subtract' ? 'Subtracted' : 'Added';
                     document.getElementById('status').innerHTML = 
-                        '<div class="success">✅ SUCCESS! ' + action + ' ' + Math.abs(quantity) + ' units to barcode ' + barcode + '</div>';
+                        '<div class="success">✅ SUCCESS! ' + actionPast + ' ' + quantity + ' units for barcode: ' + barcode + '</div>';
                     
                     // Reset form
                     document.getElementById('barcode').value = '';
@@ -229,13 +254,21 @@ barcode_scanner.html
             })
             .catch(error => {
                 document.getElementById('status').innerHTML = 
-                    '<div class="error">❌ Error: Could not update inventory</div>';
+                    '<div class="error">❌ Error: Could not update inventory. Please try again.</div>';
             });
-        });
+        }
         
         // Auto-focus barcode field on load
         window.addEventListener('load', function() {
             document.getElementById('barcode').focus();
+        });
+        
+        // Enter key support
+        document.getElementById('quantity').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                // Default to ADD when pressing Enter
+                submitInventory('add');
+            }
         });
     </script>
 </body>
