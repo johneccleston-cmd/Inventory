@@ -21,12 +21,12 @@
         h1 { 
             color: #333333; 
             text-align: center; 
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             font-size: 22px;
         }
         #scanner-container { 
             position: relative; 
-            margin: 20px 0;
+            margin: 10px 0; /* reduced margin */
             text-align: center;
         }
         #scanner-video { 
@@ -38,7 +38,7 @@
         .btn { 
             width: 100%; 
             padding: 12px; 
-            margin: 8px 0; 
+            margin: 6px 0; 
             font-size: 16px; 
             border: none; 
             border-radius: 6px; 
@@ -59,7 +59,7 @@
         input { 
             width: 100%; 
             padding: 12px; 
-            margin: 8px 0; 
+            margin: 6px 0; 
             font-size: 16px; 
             border: 1px solid #ccc; 
             border-radius: 6px;
@@ -73,7 +73,7 @@
             flex: 1;
         }
         #status {
-            margin-top: 15px;
+            margin-top: 12px;
             padding: 10px;
             border-radius: 6px;
             font-size: 14px;
@@ -100,7 +100,7 @@
 
         <form id="scanner-form">
             <input type="text" id="barcode" placeholder="Barcode" required>
-            <input type="number" id="quantity" placeholder="Quantity" value="1" min="1" required>
+            <input type="number" id="quantity" placeholder="Quantity" min="1">
             <div class="button-row">
                 <button type="button" class="btn btn-add" onclick="submitInventory('add')">Add Stock</button>
                 <button type="button" class="btn btn-subtract" onclick="submitInventory('subtract')">Subtract Stock</button>
@@ -128,9 +128,15 @@
                     await codeReader.decodeFromVideoDevice(null, 'scanner-video', (result, err) => {
                         if (result) {
                             document.getElementById('barcode').value = result.getText();
+                            document.getElementById('quantity').value = '';
                             document.getElementById('status').className = 'success';
                             document.getElementById('status').textContent = 'Barcode detected';
-                            document.getElementById('quantity').focus();
+
+                            // Stop camera automatically
+                            codeReader.reset();
+                            cameraActive = false;
+                            button.textContent = 'Start Camera';
+                            button.style.background = '#007bff';
                         }
                     });
                     cameraActive = true;
@@ -150,7 +156,9 @@
 
         function submitInventory(action) {
             const barcode = document.getElementById('barcode').value.trim();
-            const quantity = parseInt(document.getElementById('quantity').value) || 1;
+            const quantityVal = document.getElementById('quantity').value;
+            const quantity = quantityVal ? parseInt(quantityVal) : 1;
+
             if (!barcode) {
                 document.getElementById('status').className = 'error';
                 document.getElementById('status').textContent = 'Please scan or enter a barcode';
@@ -174,7 +182,7 @@
                     document.getElementById('status').className = 'success';
                     document.getElementById('status').textContent = 'Success! ' + quantity + ' units ' + (action === 'subtract' ? 'subtracted' : 'added') + ' for ' + barcode;
                     document.getElementById('barcode').value = '';
-                    document.getElementById('quantity').value = '1';
+                    document.getElementById('quantity').value = '';
                     document.getElementById('barcode').focus();
                 } else {
                     throw new Error('Network error');
@@ -190,4 +198,5 @@
     </script>
 </body>
 </html>
+
 
