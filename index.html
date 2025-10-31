@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Integrity Door NWA - Inventory Scanner</title>
+    <title>Inventory Scanner</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         body { 
@@ -136,14 +136,14 @@
                             document.getElementById('status').className = 'success';
                             document.getElementById('status').textContent = 'Barcode detected';
 
-                            // Focus quantity input automatically
-                            quantityInput.focus();
-
                             // Stop camera automatically
                             codeReader.reset();
                             cameraActive = false;
                             button.textContent = 'Scan';
                             button.style.background = '#007bff';
+
+                            // Focus quantity input
+                            quantityInput.focus();
                         }
                     });
                     cameraActive = true;
@@ -161,6 +161,19 @@
             }
         }
 
+        function hideKeyboard() {
+            const tmp = document.createElement('input');
+            tmp.setAttribute('type', 'text');
+            tmp.style.position = 'absolute';
+            tmp.style.opacity = 0;
+            tmp.style.height = 0;
+            tmp.style.fontSize = '16px';
+            document.body.appendChild(tmp);
+            tmp.focus();
+            tmp.blur();
+            document.body.removeChild(tmp);
+        }
+
         function submitInventory(action) {
             const barcodeInput = document.getElementById('barcode');
             const quantityInput = document.getElementById('quantity');
@@ -174,10 +187,7 @@
                 return;
             }
 
-            // Force close mobile keyboard
-            barcodeInput.blur();
-            quantityInput.blur();
-            setTimeout(() => document.activeElement.blur(), 50);
+            hideKeyboard(); // Close mobile keyboard
 
             const finalQuantity = action === 'subtract' ? -quantity : quantity;
             const formData = new FormData();
@@ -200,7 +210,7 @@
                     barcodeInput.value = '';
                     quantityInput.value = '';
 
-                    // Focus barcode again for next scan
+                    // Focus barcode for next scan
                     barcodeInput.focus();
                 } else {
                     throw new Error('Network error');
@@ -216,3 +226,4 @@
     </script>
 </body>
 </html>
+
